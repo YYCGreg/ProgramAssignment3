@@ -7,22 +7,54 @@ best <- function(state, outcome){
         ## Function returns a character vector for the name of the hospital with the best mortality
         ## rate 30-day)
         
-        ## Read outcome data
-        od <- read.csv("outcome-of-care-measures.csv")
-        od
-         
-        ## Check that state and outcome are valid
+        hName <- character()
         
-        ## Return hospital name in that state with lowest 30-day death
-        ## rate      
+        ## check if outcome is valid 
+        vOutcome <- c("heart attack", "heart failure", "pneumonia")
+        if (!outcome %in% vOutcome){
+                stop("invalid outcome")
+        } ## end of if
+        
+        ## Read outcome data
+        if (nchar(state)==2) {
+                outData <- read.csv("outcome-of-care-measures.csv", na.strings = "Not Available")
+        } else {
+                stop("invalid state")
+        } ## end of if
+        
+        ## Check that state is valid
+        if (state %in% outData$State){
+                if (outcome=="heart failure"){
+                        ## mortality rate from heart failure is column 17
+                        ds <- outData[,c(2,7,17)]
+                } else if (outcome=="heart attack") {
+                        ## mortality rate from heart attack is column 11
+                        ds <- outData[,c(2,7,11)]
+                } else {
+                        ## mortality rate from pneumonia is column 23
+                        ds <- outData[,c(2,7,23)]
+                } ## end of if
+                
+                ## order dataframe
+                ds <- ds[order(ds$State, ds[ ,3], ds$Hospital.Name), ]
+        
+                ## split data by state
+                s <- split(ds, ds$State)
+                
+                ## get the list of hospitals
+                h <- lapply(s, function(y) y[1,1])
+                
+                hName = as.character(h[state])
+      
+        }else {        
+                stop("invalid state")
+        } ## end of if
+        
+        ## Return hospital name in that state with lowest 30-day death rate
+        hName
+        
 } ## end of best function
 
-
-# The function should check the validity of its arguments. If an invalid state value is passed to best, the
-# function should throw an error via the stop function with the exact message “invalid state”. If an invalid
-# outcome value is passed to best, the function should throw an error via the stop function with the exact
-# message “invalid outcome”.
-# Here is some sample output from the function.
 # > source("best.R")
 # > best("TX", "heart attack")
 # [1] "CYPRESS FAIRBANKS MEDICAL CENTER"
@@ -36,5 +68,3 @@ best <- function(state, outcome){
 # Error in best("BB", "heart attack") : invalid state
 # > best("NY", "hert attack")
 # Error in best("NY", "hert attack") : invalid outcome
-# >
-        
